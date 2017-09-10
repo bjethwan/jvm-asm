@@ -12,7 +12,7 @@ public class Main {
 
         ClassReader cr = new ClassReader(is);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        ClassRename cv = new ClassRename(cw);
+        ClassRenameVisitor cv = new ClassRenameVisitor(cw);
         
         cr.accept(cv, 0);
 

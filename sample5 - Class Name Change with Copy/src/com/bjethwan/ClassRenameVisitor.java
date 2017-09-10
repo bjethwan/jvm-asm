@@ -6,15 +6,15 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class ClassRename extends ClassVisitor{
+public class ClassRenameVisitor extends ClassVisitor{
 
 	private String oriClassName;
 	
-	public ClassRename() {
+	public ClassRenameVisitor() {
 		super(327680);
 	}
 	
-	public ClassRename(ClassVisitor cv) {
+	public ClassRenameVisitor(ClassVisitor cv) {
 		super(Opcodes.ASM5, cv);
 	}
 	

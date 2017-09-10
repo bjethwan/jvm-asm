@@ -1,21 +1,24 @@
 package com.bjethwan;
 
 import java.io.FileOutputStream;
-
+import java.io.PrintStream;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.Method;
 
-public class Helloworld extends ClassLoader implements Opcodes {
+public class Helloworld2 extends ClassLoader implements Opcodes {
 
     public static void main(final String args[]) throws Exception {
         // Generates the bytecode corresponding to the following Java class:
         //
         // public class Example {
-        // 		public static void main (String[] args) {
-        // 			System.out.println("Hello world!");
-        // 		}
+        // public static void main (String[] args) {
+        // System.out.println("Hello world!");
+        // }
         // }
 
         // creates a ClassWriter for the Example public class,
@@ -58,9 +61,44 @@ public class Helloworld extends ClassLoader implements Opcodes {
         fos.write(code);
         fos.close();
 
-        Helloworld loader = new Helloworld();
+        Helloworld2 loader = new Helloworld2();
         Class<?> exampleClass = loader.defineClass("Example", code, 0,
                 code.length);
+
+        // uses the dynamically generated class to print 'Helloworld'
+        exampleClass.getMethods()[0].invoke(null, new Object[] { null });
+
+        // ------------------------------------------------------------------------
+        // Same example with a GeneratorAdapter (more convenient but slower)
+        // ------------------------------------------------------------------------
+
+        cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        cw.visit(V1_1, ACC_PUBLIC, "Example", null, "java/lang/Object", null);
+
+        // creates a GeneratorAdapter for the (implicit) constructor
+        Method m = Method.getMethod("void <init> ()");
+        GeneratorAdapter mg = new GeneratorAdapter(ACC_PUBLIC, m, null, null,cw);
+        mg.loadThis();
+        mg.invokeConstructor(Type.getType(Object.class), m);
+        mg.returnValue();
+        mg.endMethod();
+
+        // creates a GeneratorAdapter for the 'main' method
+        m = Method.getMethod("void main (String[])");
+        mg = new GeneratorAdapter(ACC_PUBLIC + ACC_STATIC, m, null, null, cw);
+        mg.getStatic(Type.getType(System.class), "out",
+                Type.getType(PrintStream.class));
+        mg.push("Hello world!");
+        mg.invokeVirtual(Type.getType(PrintStream.class),
+                Method.getMethod("void println (String)"));
+        mg.returnValue();
+        mg.endMethod();
+
+        cw.visitEnd();
+
+        code = cw.toByteArray();
+        loader = new Helloworld2();
+        exampleClass = loader.defineClass("Example", code, 0, code.length);
 
         // uses the dynamically generated class to print 'Helloworld'
         exampleClass.getMethods()[0].invoke(null, new Object[] { null });
